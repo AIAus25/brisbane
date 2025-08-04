@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Mobile Chatbot Widget</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Brisbane City Council style page content */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px 20px;
+        }
+
+        .page-header img {
+            height: 60px;
+        }
+
+        .page-content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .page-content h1 {
+            color: #003d6a;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .page-content p {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .council-section {
+            background: #f8f8f8;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .council-section h2 {
+            color: #003d6a;
+            margin-bottom: 20px;
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #0073e6;
+        }
+
+        .action-card h3 {
+            color: #003d6a;
+            margin-bottom: 15px;
+        }
+
+        /* FIXED CHATBOT WIDGET STYLES */
+        .chatbot-widget {
+            position: fixed;
+            z-index: 9999;
+            background: #0073e6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            
+            /* Ensure widget stays within viewport */
+            right: 10px !important;
+            bottom: 10px !important;
+            
+            /* Default size */
+            width: 56px;
+            height: 56px;
+        }
+
+        /* Widget icon */
+        .chatbot-widget::before {
+            content: "💬";
+            font-size: 24px;
+        }
+
+        .chatbot-widget:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive sizes with safe margins */
+        @media screen and (max-width: 360px) {
+            .chatbot-widget {
+                right: 8px !important;
+                bottom: 8px !important;
+                width: 48px;
+                height: 48px;
+            }
+            
+            .chatbot-widget::before {
+                font-size: 20px;
+            }
+        }
+
+        @media screen and (min-width: 361px) and (max-width: 480px) {
+            .chatbot-widget {
+                right: 10px !important;
+                bottom: 10px !important;
+                width: 52px;
+                height: 52px;
+            }
+            
+            .chatbot-widget::before {
+                font-size: 22px;
+            }
+        }
+
+        @media screen and (min-width: 481px) and (max-width: 768px) {
+            .chatbot-widget {
+                right: 15px !important;
+                bottom: 15px !important;
+                width: 56px;
+                height: 56px;
+            }
+        }
+
+        @media screen and (min-width: 769px) {
+            .chatbot-widget {
+                right: 20px !important;
+                bottom: 20px !important;
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* Chat Window */
+        .chatbot-window {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 9998;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chatbot-window.active {
+            display: flex;
+        }
+
+        /* Chat window header */
+        .chatbot-header {
+            background: #0073e6;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .chatbot-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Chat window body */
+        .chatbot-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Chat messages */
+        .chat-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .chat-message.bot {
+            background: #e3f2fd;
+            align-self: flex-start;
+        }
+
+        .chat-message.user {
+            background: #0073e6;
+            color: white;
+            align-self: flex-end;
+        }
+
+        /* Chat input area */
+        .chatbot-input-area {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #0073e6;
+        }
+
+        .send-btn {
+            background: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #0056b3;
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Mobile-specific chat window positioning */
+        @media screen and (max-width: 480px) {
+            .chatbot-window {
+                right: env(safe-area-inset-right, 10px) !important;
+                left: env(safe-area-inset-left, 10px) !important;
+                bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+                width: calc(100vw - env(safe-area-inset-left, 10px) - env(safe-area-inset-right, 10px) - 20px) !important;
+                height: min(70vh, 450px) !important;
+                max-width: none !important;
+            }
+        }
+
+        @media screen and (min-width: 481px) and (max-width: 768px) {
+            .chatbot-window {
+                right: 15px !important;
+                bottom: 85px !important;
+                width: calc(100vw - 30px) !important;
+                max-width: 380px !important;
+                height: min(70vh, 480px) !important;
+            }
+        }
+
+        @media screen and (min-width: 769px) {
+            .chatbot-window {
+                right: 20px !important;
+                bottom: 90px !important;
+                width: 380px !important;
+                height: 500px !important;
+            }
+        }
+
+        /* Animation */
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Brisbane City Council style page -->
+    <div class="page-header">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="background: #003d6a; padding: 10px; border-radius: 4px;">
+                <span style="color: white; font-size: 24px;">🏛️</span>
+            </div>
+            <div>
+                <h2 style="color: #003d6a; margin: 0;">Brisbane</h2>
+                <p style="color: #0073e6; margin: 0;">City Council</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <h1>Contact Council</h1>
+        <p>For enquiries, feedback or to report issues, there are various ways to contact Council.</p>
+
+        <div class="council-section">
+            <h2>What would you like to do?</h2>
+            
+            <div class="action-cards">
+                <div class="action-card">
+                    <h3>Report an issue</h3>
+                    <p>Find online forms to report issues, including road maintenance, safety hazards and unmaintained properties.</p>
+                </div>
+                
+                <div class="action-card">
+                    <h3>Make a complaint</h3>
+                    <p>Make a complaint about a noise, nuisance or dispute that's impacting you or your neighbourhood.</p>
+                </div>
+                
+                <div class="action-card">
+                    <h3>Community engagement</h3>
+                    <p>Have your say on matters affecting your community and Brisbane's future. Take part in surveys, workshops and forums.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="height: 500px;"></div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div class="chatbot-widget" id="chatbotWidget"></div>
+
+    <!-- Chat Window -->
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <h3>Chat Support</h3>
+            <button class="close-btn" id="closeChat">×</button>
+        </div>
+        <div class="chatbot-body" id="chatBody">
+            <div class="chat-message bot">Welcome! How can I help you today?</div>
+        </div>
+        <div class="chatbot-input-area">
+            <input 
+                type="text" 
+                class="chat-input" 
+                id="chatInput" 
+                placeholder="Type your message..."
+                autocomplete="off"
+            >
+            <button class="send-btn" id="sendBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Chat functionality
+        const widget = document.getElementById('chatbotWidget');
+        const chatWindow = document.getElementById('chatbotWindow');
+        const closeBtn = document.getElementById('closeChat');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatBody = document.getElementById('chatBody');
+
+        // Toggle chat window
+        widget.addEventListener('click', () => {
+            chatWindow.classList.add('active');
+            widget.style.display = 'none';
+            // Focus on input when chat opens
+            setTimeout(() => chatInput.focus(), 100);
+        });
+
+        closeBtn.addEventListener('click', () => {
+            chatWindow.classList.remove('active');
+            widget.style.display = 'flex';
+        });
+
+        // Send message function
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                // Add user message
+                const userMsg = document.createElement('div');
+                userMsg.className = 'chat-message user';
+                userMsg.textContent = message;
+                chatBody.appendChild(userMsg);
+
+                // Clear input
+                chatInput.value = '';
+
+                // Scroll to bottom
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+                // Simulate bot response
+                setTimeout(() => {
+                    const botMsg = document.createElement('div');
+                    botMsg.className = 'chat-message bot';
+                    botMsg.textContent = 'Thank you for your message. How else can I assist you?';
+                    chatBody.appendChild(botMsg);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 1000);
+            }
+        }
+
+        // Send button click
+        sendBtn.addEventListener('click', sendMessage);
+
+        // Enter key to send
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Handle viewport resize
+        window.addEventListener('resize', () => {
+            const widgetElement = document.querySelector('.chatbot-widget');
+            const rect = widgetElement.getBoundingClientRect();
+            
+            if (rect.right > window.innerWidth) {
+                widgetElement.style.right = '10px';
+            }
+            
+            if (rect.bottom > window.innerHeight) {
+                widgetElement.style.bottom = '10px';
+            }
+        });
+    </script>
+</body>
+</html>
